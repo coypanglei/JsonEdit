@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>JSON配置 - 表单配置工具</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        .btn {
+            padding: 8px 16px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            min-width: 80px;
+        }
+        .btn:focus {
+            outline: 2px solid #1890ff;
+            outline-offset: 2px;
+        }
+        .btn-primary {
+            background-color: #1890ff;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #40a9ff;
+        }
+        .btn-default {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+        .btn-default:hover {
+            background-color: #d9d9d9;
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+        .json-editor {
+            margin-bottom: 20px;
+        }
+        .json-input-area {
+            width: 100%;
+            min-height: 400px;
+            margin: 10px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            resize: vertical;
+            white-space: pre;
+        }
+        .json-input-area:focus {
+            border-color: #1890ff;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(24,144,255,0.2);
+        }
+        .message {
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            display: none;
+        }
+        .message.success {
+            background-color: #f6ffed;
+            border: 1px solid #b7eb8f;
+            color: #52c41a;
+        }
+        .message.error {
+            background-color: #fff2f0;
+            border: 1px solid #ffccc7;
+            color: #ff4d4f;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>JSON配置</h2>
+            <div class="btn-group">
+                <button class="btn btn-default" onclick="window.location.href='index.html'">返回表单设计</button>
+            </div>
+        </div>
+
+        <div id="message" class="message"></div>
+
+        <div class="json-editor">
+            <h3 style="margin-bottom: 10px;">JSON编辑器</h3>
+            <textarea class="json-input-area" id="jsonInput" placeholder='{
+    "MineID": "370811002235",
+    "MineName": "何岗煤矿",
+    "MonitorTime": "2025/03/28 16:18:34",
+    "StationID": "37081100223505MN0503041",
+    "StationType": "0503",
+    "ValueTime": "2025/03/28 14:35:27",
+    "SensorTypeName": "流量",
+    "SensorStatusName": "正常",
+    "MonitorValue": "85.40",
+    "Unit": "m3/min",
+    "Location": "161采区涌水量"
+}'></textarea>
+            <div class="btn-group" style="margin-top: 20px;">
+                <button class="btn btn-default" id="parseJson">解析JSON</button>
+                <button class="btn btn-default" id="copyJson">复制JSON</button>
+                <button class="btn btn-primary" id="applyJson">应用到表单</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/json-handler.js"></script>
+    <script>
+        // 初始化 JsonHandler
+        const jsonHandler = new JsonHandler();
+        
+        // 显示消息
+        function showMessage(text, type) {
+            const message = document.getElementById('message');
+            message.textContent = text;
+            message.className = 'message ' + type;
+            message.style.display = 'block';
+            setTimeout(() => {
+                message.style.display = 'none';
+            }, 3000);
+        }
+
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', function() {
+            // 从 localStorage 获取之前的 JSON
+            const savedJson = localStorage.getItem('formJson');
+            if (savedJson) {
+                document.getElementById('jsonInput').value = savedJson;
+            }
+
+            // 解析 JSON 按钮
+            document.getElementById('parseJson').addEventListener('click', function() {
+                const jsonInput = document.getElementById('jsonInput').value;
+                if (jsonHandler.parseJson(jsonInput)) {
+                    showMessage('JSON解析成功！', 'success');
+                    localStorage.setItem('formJson', jsonInput);
+                } else {
+                    showMessage('JSON格式错误！', 'error');
+                }
+            });
+
+            // 复制 JSON 按钮
+            document.getElementById('copyJson').addEventListener('click', function() {
+                const jsonInput = document.getElementById('jsonInput');
+                jsonInput.select();
+                document.execCommand('copy');
+                showMessage('JSON已复制到剪贴板！', 'success');
+            });
+
+            // 应用到表单按钮
+            document.getElementById('applyJson').addEventListener('click', function() {
+                const jsonInput = document.getElementById('jsonInput').value;
+                if (jsonHandler.parseJson(jsonInput)) {
+                    localStorage.setItem('formJson', jsonInput);
+                    localStorage.setItem('formItems', JSON.stringify(jsonHandler.formItems));
+                    window.location.href = 'index.html';
+                } else {
+                    showMessage('JSON格式错误！', 'error');
+                }
+            });
+        });
+    </script>
+</body>
+</html> 

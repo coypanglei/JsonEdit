@@ -1,0 +1,92 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# 数据同步机制
+
+本文档描述了表单配置工具中的数据同步机制，特别是表单设计和RecordsBean配置之间的双向同步。
+
+## 核心文件
+
+- [index.html](mdc:index.html) - 表单设计页面
+- [records-config.html](mdc:records-config.html) - RecordsBean配置页面
+- [js/utils.js](mdc:js/utils.js) - 工具类，包含localStorage操作
+
+## 同步流程
+
+1. 表单设计 -> RecordsBean
+   - 切换到records-config.html时自动触发
+   - 通过generateFromFormDesign()函数实现
+   - 从localStorage读取formItems数据
+   - 转换为RecordsBean格式并显示
+
+2. RecordsBean -> 表单设计
+   - 编辑RecordsBean属性时触发
+   - 解析新JSON数据时触发
+   - 清空内容时触发
+   - 通过syncToFormDesign()函数实现
+   - 保存到localStorage的formItems中
+
+## 数据转换规则
+
+1. FormItem转RecordsBean：
+```javascript
+{
+  id: 'form-item-xxx',
+  type: 'EDIT_ITEM',
+  title: '姓名',
+  field: 'name',
+  defaultValue: '',
+  required: true
+}
+->
+{
+  paramType: 1,
+  titile: '姓名',
+  field: 'name',
+  defaultValue: '',
+  type: 'EDIT_ITEM',
+  require: true,
+  edit: true,
+  ordernum: index + 1
+}
+```
+
+2. RecordsBean转FormItem：
+```javascript
+{
+  paramType: 1,
+  titile: '姓名',
+  field: 'name',
+  type: 'EDIT_ITEM',
+  require: true
+}
+->
+{
+  id: 'form-item-' + timestamp,
+  type: 'EDIT_ITEM',
+  title: '姓名',
+  field: 'name',
+  defaultValue: '',
+  required: true
+}
+```
+
+## 注意事项
+
+1. ID生成
+   - FormItem的id需要保持唯一
+   - 使用时间戳+随机字符串生成
+   - 格式：'form-item-' + Date.now() + random()
+
+2. 数据校验
+   - JSON格式校验
+   - 必填字段检查
+   - 类型映射检查
+
+3. 错误处理
+   - JSON解析错误提示
+   - 数据格式错误提示
+   - 类型转换错误处理
+

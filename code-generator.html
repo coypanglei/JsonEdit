@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>代码生成 - 表单配置工具</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        .btn {
+            padding: 8px 16px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            min-width: 80px;
+        }
+        .btn:focus {
+            outline: 2px solid #1890ff;
+            outline-offset: 2px;
+        }
+        .btn-primary {
+            background-color: #1890ff;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #40a9ff;
+        }
+        .btn-default {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+        .btn-default:hover {
+            background-color: #d9d9d9;
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+        .code-editor {
+            margin-bottom: 20px;
+        }
+        .code-preview {
+            width: 100%;
+            min-height: 500px;
+            margin: 10px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            white-space: pre;
+            overflow-x: auto;
+            background-color: #f8f9fa;
+        }
+        .message {
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            display: none;
+        }
+        .message.success {
+            background-color: #f6ffed;
+            border: 1px solid #b7eb8f;
+            color: #52c41a;
+        }
+        .message.error {
+            background-color: #fff2f0;
+            border: 1px solid #ffccc7;
+            color: #ff4d4f;
+        }
+        .toolbar {
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>代码生成</h2>
+            <div class="btn-group">
+                <button class="btn btn-default" onclick="window.location.href='index.html'">返回表单设计</button>
+            </div>
+        </div>
+
+        <div id="message" class="message"></div>
+
+        <div class="code-editor">
+            <div class="toolbar">
+                <h3>Activity代码预览</h3>
+                <div class="btn-group">
+                    <button class="btn btn-default" id="refreshCode">刷新代码</button>
+                    <button class="btn btn-primary" id="copyCode">复制代码</button>
+                </div>
+            </div>
+            <pre class="code-preview" id="codePreview">// 代码将在这里显示</pre>
+        </div>
+    </div>
+
+    <script src="js/code-generator.js"></script>
+    <script>
+        // 初始化代码生成器
+        const codeGenerator = new CodeGenerator();
+        
+        // 显示消息
+        function showMessage(text, type) {
+            const message = document.getElementById('message');
+            message.textContent = text;
+            message.className = 'message ' + type;
+            message.style.display = 'block';
+            setTimeout(() => {
+                message.style.display = 'none';
+            }, 3000);
+        }
+
+        // 生成代码
+        function generateCode() {
+            const formItems = JSON.parse(localStorage.getItem('formItems') || '[]');
+            const formTitle = localStorage.getItem('formTitle') || '表单标题';
+            const code = codeGenerator.generateActivityCode(formTitle, formItems);
+            document.getElementById('codePreview').textContent = code;
+        }
+
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', function() {
+            // 生成初始代码
+            generateCode();
+
+            // 刷新代码按钮
+            document.getElementById('refreshCode').addEventListener('click', function() {
+                generateCode();
+                showMessage('代码已刷新！', 'success');
+            });
+
+            // 复制代码按钮
+            document.getElementById('copyCode').addEventListener('click', function() {
+                const code = document.getElementById('codePreview').textContent;
+                codeGenerator.copyToClipboard(code);
+                showMessage('代码已复制到剪贴板！', 'success');
+            });
+        });
+    </script>
+</body>
+</html> 

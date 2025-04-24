@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>RecordsBean 配置工具</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .workspace {
+            display: flex;
+            gap: 20px;
+            padding: 20px;
+            height: calc(100vh - 150px);
+        }
+        .form-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            background: #fff;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .records-preview {
+            flex: 1;
+            background: #fff;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+        }
+        .json-view {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            flex: 1;
+            overflow: auto;
+            white-space: pre;
+            word-wrap: break-word;
+            border: 1px solid #d9d9d9;
+            resize: none;
+            outline: none;
+            transition: all 0.3s;
+        }
+        .json-view:hover {
+            border-color: #40a9ff;
+        }
+        .json-view:focus {
+            border-color: #1890ff;
+            box-shadow: 0 0 0 2px rgba(24,144,255,0.2);
+        }
+        .records-item {
+            margin-bottom: 10px;
+            padding: 15px;
+            border: 1px solid #e8e8e8;
+            border-radius: 4px;
+            background: #fff;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .records-item:hover {
+            border-color: #1890ff;
+            box-shadow: 0 2px 8px rgba(24,144,255,0.1);
+        }
+        .field-row {
+            display: flex;
+            margin-bottom: 12px;
+            align-items: center;
+        }
+        .field-label {
+            width: 80px;
+            color: #666;
+            font-size: 14px;
+        }
+        .field-value {
+            flex: 1;
+            color: #333;
+        }
+        .property-input {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+        .property-input:hover {
+            border-color: #40a9ff;
+        }
+        .property-input:focus {
+            border-color: #1890ff;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(24,144,255,0.2);
+        }
+        .copy-btn {
+            position: absolute;
+            right: 15px;
+            top: 15px;
+            z-index: 1;
+        }
+        .json-container {
+            position: relative;
+            padding: 15px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .json-container h3 {
+            margin: 0 0 15px 0;
+        }
+        .success-tip {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            display: none;
+        }
+        .main-content {
+            height: calc(100vh - 50px);
+            overflow: hidden;
+        }
+        .main {
+            height: 100%;
+        }
+        .json-item {
+            display: inline-block;
+            width: 100%;
+        }
+        .json-item.highlight {
+            background: rgba(24,144,255,0.1);
+        }
+        .records-item.selected {
+            border-color: #1890ff;
+            background: rgba(24,144,255,0.05);
+            box-shadow: 0 2px 8px rgba(24,144,255,0.1);
+        }
+        .json-toolbar {
+            margin-bottom: 10px;
+            display: flex;
+            gap: 10px;
+            position: absolute;
+            right: 15px;
+            top: 15px;
+        }
+        .error-tip {
+            color: #ff4d4f;
+            font-size: 14px;
+            margin-top: 8px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="tabs">
+            <div class="tab" onclick="window.location.href='index.html'">表单设计</div>
+            <div class="tab active">RecordsBean配置</div>
+            <div class="tab" onclick="window.location.href='json-config.html'">JSON配置</div>
+            <div class="tab" onclick="window.location.href='code-generator.html'">代码生成</div>
+        </div>
+        
+        <div class="main-content">
+            <div class="main">
+                <div class="workspace">
+                    <div class="form-area">
+                        <h3>表单项列表</h3>
+                        <div id="recordsList"></div>
+                    </div>
+                    
+                    <div class="records-preview">
+                        <div class="json-container">
+                            <h3>RecordsBean JSON配置</h3>
+                            <div class="json-toolbar">
+                                <button class="btn btn-primary" onclick="copyJson()">复制</button>
+                                <button class="btn btn-default" onclick="clearJson()">清空</button>
+                                <button class="btn btn-default" onclick="parseJson()">解析</button>
+                            </div>
+                            <textarea id="jsonView" class="json-view" spellcheck="false"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="successTip" class="success-tip">复制成功</div>
+
+    <script src="js/utils.js"></script>
+    <script>
+        // RecordsBean 数据模型
+        class RecordsBean {
+            constructor(type) {
+                this.paramType = this.getParamTypeByComponentType(type);
+                this.titile = '新建表单项';
+                this.field = '';
+                this.defaultValue = '';
+                this.type = type;
+                this.require = false;
+                this.edit = true;
+                this.ordernum = 0;
+            }
+
+            getParamTypeByComponentType(type) {
+                const typeMap = {
+                    'EDIT_ITEM': 1,
+                    'EDIT_TEXT_LARGE': 2,
+                    'TIME_ITEM': 3,
+                    'POPU_ITEM': 4,
+                    'TEXT_VIEW_SINGLE_SELECT': 5,
+                    'TEXT_VIEW_ONE': 6,
+                    'SELECT_CONTACTS': 7,
+                    'SELECT_DEPTE': 8,
+                    'UPLOAD_ITEM': 9,
+                    'NULL_VIEW': 10
+                };
+                return typeMap[type] || 1;
+            }
+        }
+
+        // 全局变量存储 RecordsBean 列表
+        let recordsList = [];
+
+        // 从表单设计生成RecordsBean配置
+        function generateFromFormDesign() {
+            // 从localStorage获取表单设计数据
+            const formItems = Utils.getFromStorage('formItems', []);
+            
+            // 清空当前列表
+            recordsList = [];
+            
+            // 转换为RecordsBean格式
+            recordsList = formItems.map((item, index) => {
+                const record = new RecordsBean(item.type);
+                record.titile = item.title;
+                record.field = item.field;
+                record.defaultValue = item.defaultValue;
+                record.require = item.required;
+                record.ordernum = index + 1;
+                return record;
+            });
+            
+            // 更新视图
+            updateView();
+        }
+
+        // 更新视图
+        function updateView() {
+            updateRecordsList();
+            updateJsonView();
+        }
+
+        // 更新记录列表视图
+        function updateRecordsList() {
+            const container = document.getElementById('recordsList');
+            container.innerHTML = '';
+
+            recordsList.forEach((record, index) => {
+                const item = document.createElement('div');
+                item.className = 'records-item';
+                item.setAttribute('data-index', index);
+                item.innerHTML = `
+                    <div class="field-row">
+                        <span class="field-label">类型：</span>
+                        <span class="field-value">${record.type}</span>
+                    </div>
+                    <div class="field-row">
+                        <span class="field-label">标题：</span>
+                        <input type="text" class="property-input" value="${record.titile}" 
+                            onchange="updateRecord(${index}, 'titile', this.value)">
+                    </div>
+                    <div class="field-row">
+                        <span class="field-label">字段名：</span>
+                        <input type="text" class="property-input" value="${record.field}"
+                            onchange="updateRecord(${index}, 'field', this.value)">
+                    </div>
+                    <div class="field-row">
+                        <span class="field-label">默认值：</span>
+                        <input type="text" class="property-input" value="${record.defaultValue}"
+                            onchange="updateRecord(${index}, 'defaultValue', this.value)">
+                    </div>
+                    <div class="field-row">
+                        <span class="field-label">必填：</span>
+                        <input type="checkbox" ${record.require ? 'checked' : ''}
+                            onchange="updateRecord(${index}, 'require', this.checked)">
+                    </div>
+                `;
+
+                item.addEventListener('click', function(e) {
+                    if (e.target.tagName === 'INPUT') return;
+                    document.querySelectorAll('.records-item').forEach(i => i.classList.remove('selected'));
+                    this.classList.add('selected');
+                    highlightJsonItem(index);
+                });
+
+                container.appendChild(item);
+            });
+        }
+
+        // 更新JSON视图
+        function updateJsonView() {
+            const jsonView = document.getElementById('jsonView');
+            const cleanRecords = recordsList.map(record => {
+                const cleanRecord = {};
+                Object.entries(record).forEach(([key, value]) => {
+                    if (value !== '' && value !== null && value !== undefined) {
+                        cleanRecord[key] = value;
+                    }
+                });
+                return cleanRecord;
+            });
+            jsonView.value = JSON.stringify(cleanRecords, null, 2);
+        }
+
+        // 高亮JSON中的特定项
+        function highlightJsonItem(index) {
+            const jsonView = document.getElementById('jsonView');
+            const text = jsonView.value;
+            const lines = text.split('\n');
+            
+            let currentObject = -1;
+            let startPos = 0;
+            let endPos = 0;
+            
+            // 遍历找到对应的对象位置
+            for (let i = 0; i < lines.length; i++) {
+                if (lines[i].includes('{')) {
+                    currentObject++;
+                    if (currentObject === index) {
+                        startPos = lines.slice(0, i).join('\n').length + (i > 0 ? 1 : 0);
+                    }
+                } else if (lines[i].includes('}')) {
+                    if (currentObject === index) {
+                        endPos = lines.slice(0, i + 1).join('\n').length;
+                        break;
+                    }
+                }
+            }
+            
+            // 设置选中范围
+            jsonView.focus();
+            jsonView.setSelectionRange(startPos, endPos);
+            
+            // 确保选中区域可见
+            const lineHeight = 20; // 估计的行高
+            const scrollPosition = startPos * (lineHeight / 40); // 40是平均每行字符数的估计值
+            jsonView.scrollTop = scrollPosition - jsonView.clientHeight / 2;
+        }
+
+        // 复制JSON
+        function copyJson() {
+            const jsonView = document.getElementById('jsonView');
+            jsonView.select();
+            document.execCommand('copy');
+            
+            const tip = document.getElementById('successTip');
+            tip.style.display = 'block';
+            setTimeout(() => {
+                tip.style.display = 'none';
+            }, 2000);
+        }
+
+        // 清空JSON
+        function clearJson() {
+            if (confirm('确定要清空所有内容吗？')) {
+                recordsList = [];
+                updateView();
+                // 同步到表单设计
+                syncToFormDesign();
+            }
+        }
+
+        // 解析JSON
+        function parseJson() {
+            try {
+                const jsonView = document.getElementById('jsonView');
+                const jsonData = JSON.parse(jsonView.value);
+                
+                if (!Array.isArray(jsonData)) {
+                    throw new Error('数据格式错误：应该是一个数组');
+                }
+
+                recordsList = jsonData.map(item => {
+                    const record = new RecordsBean(item.type || 'EDIT_ITEM');
+                    Object.assign(record, item);
+                    return record;
+                });
+
+                updateRecordsList();
+                // 同步到表单设计
+                syncToFormDesign();
+                
+            } catch (error) {
+                alert('JSON格式错误：' + error.message);
+            }
+        }
+
+        // 更新记录
+        function updateRecord(index, field, value) {
+            recordsList[index][field] = value;
+            updateView();
+            // 同步到表单设计
+            syncToFormDesign();
+        }
+
+        // 同步到表单设计
+        function syncToFormDesign() {
+            // 将RecordsBean格式转换为表单设计格式
+            const formItems = recordsList.map(record => ({
+                id: 'form-item-' + Date.now() + Math.random().toString(36).substr(2, 9),
+                type: record.type,
+                title: record.titile,
+                field: record.field,
+                defaultValue: record.defaultValue,
+                required: record.require
+            }));
+
+            // 保存到localStorage
+            Utils.saveToStorage('formItems', formItems);
+        }
+
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', function() {
+            // 从表单设计生成配置
+            generateFromFormDesign();
+            
+            // 监听JSON编辑器的变化
+            const jsonView = document.getElementById('jsonView');
+            let timer;
+            jsonView.addEventListener('input', function() {
+                clearTimeout(timer);
+                timer = setTimeout(() => {
+                    try {
+                        JSON.parse(this.value);
+                        this.style.borderColor = '#d9d9d9';
+                    } catch (e) {
+                        this.style.borderColor = '#ff4d4f';
+                    }
+                }, 300);
+            });
+        });
+    </script>
+</body>
+</html> 

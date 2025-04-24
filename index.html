@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>表单配置工具</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .json-view {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            height: 500px;
+            overflow: auto;
+        }
+        .records-preview {
+            margin-top: 20px;
+            padding: 15px;
+            background: #fff;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .records-item {
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #e8e8e8;
+            border-radius: 4px;
+        }
+        .records-item:hover {
+            border-color: #1890ff;
+        }
+        .field-row {
+            display: flex;
+            margin-bottom: 8px;
+            align-items: center;
+        }
+        .field-label {
+            width: 120px;
+            color: #666;
+        }
+        .field-value {
+            flex: 1;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="tabs">
+            <div class="tab active" data-tab="design">表单设计</div>
+            <div class="tab" onclick="window.location.href='records-config.html'">RecordsBean配置</div>
+
+            <div class="tab" onclick="window.location.href='json-config.html'">JSON配置</div>
+            <div class="tab" onclick="window.location.href='code-generator.html'">代码生成</div>
+        </div>
+        
+        <div class="main-content">
+            <!-- 表单设计标签页 -->
+            <div class="tab-content active" id="design-tab">
+        <div class="sidebar">
+            <h2 style="margin-bottom: 20px;">表单配置工具</h2>
+            
+            <div class="component-list">
+                <div class="component-category">基础组件</div>
+                <div class="component-item" data-type="EDIT_ITEM">单行文本框</div>
+                <div class="component-item" data-type="EDIT_TEXT_LARGE">多行文本框</div>
+                <div class="component-item" data-type="TIME_ITEM">时间选择器</div>
+                <div class="component-item" data-type="POPU_ITEM">下拉选择框</div>
+                <div class="component-item" data-type="TEXT_VIEW_SINGLE_SELECT">单选框</div>
+                <div class="component-item" data-type="TEXT_VIEW_ONE">按钮</div>
+            </div>
+            
+            <div class="component-list">
+                <div class="component-category">高级组件</div>
+                <div class="component-item" data-type="SELECT_CONTACTS">选择联系人</div>
+                <div class="component-item" data-type="SELECT_DEPTE">选择部门</div>
+                <div class="component-item" data-type="UPLOAD_ITEM">上传附件</div>
+                <div class="component-item" data-type="NULL_VIEW">空白分隔</div>
+            </div>
+        </div>
+        
+        <div class="main">
+            <div class="toolbar">
+                <div>
+                    <input type="text" id="formTitle" placeholder="表单标题" style="padding: 8px; border-radius: 4px; border: 1px solid #ddd; width: 200px;">
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-primary" id="generateCode">生成代码</button>
+                </div>
+            </div>
+            
+            <div class="workspace">
+                <div class="form-area" id="formDesignArea">
+                    <div class="form-placeholder" style="text-align: center; color: #999; padding: 40px 0;">
+                        从左侧点击组件添加到表单
+                    </div>
+                </div>
+                
+                <div class="property-panel" id="propertyPanel" style="display: none;">
+                    <h3 style="margin-bottom: 15px;">属性设置</h3>
+                    
+                    <div class="property-group">
+                        <div class="property-title">基本属性</div>
+                        <div class="property-item">
+                            <label class="property-label">标题</label>
+                            <input type="text" class="property-input" id="prop-title">
+                        </div>
+                        <div class="property-item">
+                            <label class="property-label">字段名</label>
+                            <input type="text" class="property-input" id="prop-field">
+                        </div>
+                        <div class="property-item">
+                            <label class="property-label">提示文本</label>
+                            <input type="text" class="property-input" id="prop-defaultValue">
+                        </div>
+                    </div>
+                    
+                    <div class="property-group">
+                        <div class="property-title">高级属性</div>
+                        <div class="property-item">
+                            <label class="property-label">
+                                <input type="checkbox" class="property-checkbox" id="prop-required">
+                                必填项
+                            </label>
+                        </div>
+                        <div class="property-item">
+                            <label class="property-label">行为类型</label>
+                            <select class="property-select" id="prop-type">
+                                <option value="">无</option>
+                                <option value="popup_edit">弹窗编辑</option>
+                                <option value="time_select">时间选择</option>
+                                <option value="select_contacts">选择联系人</option>
+                                <option value="submitapi">提交API</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                    </div>
+        </div>
+        
+        <div class="preview">
+            <h3 style="margin-bottom: 15px;">表单预览</h3>
+            <div class="preview-phone">
+                <div class="preview-header" id="previewTitle">表单标题</div>
+                <div class="preview-content" id="previewContent">
+                    <!-- 预览内容将在这里动态生成 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+           
+            <!-- 代码生成标签页 -->
+            <div class="tab-content" id="code-tab">
+                <div class="code-editor" style="flex: 1; padding: 20px; background: #fff;">
+                    <h2 style="margin-bottom: 20px;">代码生成</h2>
+                    <div class="code-preview" id="codePreview" style="height: calc(100% - 60px); overflow-y: auto;">
+                        <!-- 代码预览将在这里显示 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/utils.js"></script>
+    <script src="js/form-manager.js"></script>
+    <script src="js/ui-manager.js"></script>
+    <script>
+        // 初始化管理器
+        const formManager = new FormManager();
+        const uiManager = new UIManager(formManager);
+        
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', function() {
+            // 从localStorage加载数据
+            formManager.loadFromStorage();
+            uiManager.updateFormArea();
+            uiManager.updatePreview();
+
+            // 监听表单标题变化
+            document.getElementById('formTitle').addEventListener('input', function() {
+                Utils.saveToStorage('formTitle', this.value);
+                document.getElementById('previewTitle').textContent = this.value || '表单标题';
+            });
+
+            // 组件点击事件
+            document.querySelectorAll('.component-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const type = this.getAttribute('data-type');
+                    formManager.addFormItem(type);
+                    uiManager.updateFormArea();
+                    uiManager.updatePreview();
+                    formManager.saveToStorage();
+                });
+            });
+            
+            // 属性面板输入事件
+            const propertyInputs = ['prop-title', 'prop-field', 'prop-defaultValue', 'prop-required', 'prop-type'];
+            propertyInputs.forEach(id => {
+                document.getElementById(id).addEventListener('change', function() {
+                    const selectedItem = formManager.getSelectedItem();
+                    if (!selectedItem) return;
+
+                    const properties = {
+                        title: document.getElementById('prop-title').value,
+                        field: document.getElementById('prop-field').value,
+                        defaultValue: document.getElementById('prop-defaultValue').value,
+                        required: document.getElementById('prop-required').checked,
+                        behaviorType: document.getElementById('prop-type').value
+                    };
+
+                    formManager.updateFormItem(selectedItem.id, properties);
+                    uiManager.updateFormArea();
+                    uiManager.updatePreview();
+                    formManager.saveToStorage();
+                });
+            });
+
+            // 生成代码按钮事件
+            document.getElementById('generateCode').addEventListener('click', function() {
+                formManager.saveToStorage();
+                Utils.saveToStorage('formTitle', document.getElementById('formTitle').value);
+                window.location.href = 'code-generator.html';
+            });
+
+            // 事件委托处理动态生成的元素
+            document.addEventListener('click', function(e) {
+                if (!e.target.classList.contains('form-item-action')) return;
+
+                const itemId = e.target.closest('.form-item').id;
+                const action = e.target.textContent;
+
+                switch(action) {
+                    case '↑':
+                    case '↓':
+                        formManager.moveFormItem(itemId, action === '↑' ? 'up' : 'down');
+                        break;
+                    case '×':
+                        formManager.deleteFormItem(itemId);
+                        break;
+                }
+
+                uiManager.updateFormArea();
+                uiManager.updatePreview();
+                formManager.saveToStorage();
+                e.stopPropagation();
+            });
+
+            // 加载表单标题
+            const savedTitle = Utils.getFromStorage('formTitle', '');
+            if (savedTitle) {
+                document.getElementById('formTitle').value = savedTitle;
+                document.getElementById('previewTitle').textContent = savedTitle;
+            }
+        });
+
+        // RecordsBean 数据模型
+        class RecordsBean {
+            constructor(type) {
+                this.paramType = this.getParamTypeByComponentType(type);
+                this.titile = '新建表单项';
+                this.field = '';
+                this.defaultValue = '';
+                this.type = type;
+                this.require = false;
+                this.edit = true;
+                this.ordernum = 0;
+            }
+
+            getParamTypeByComponentType(type) {
+                const typeMap = {
+                    'EDIT_ITEM': 1,
+                    'EDIT_TEXT_LARGE': 2,
+                    'TIME_ITEM': 3,
+                    'POPU_ITEM': 4,
+                    'TEXT_VIEW_SINGLE_SELECT': 5,
+                    'TEXT_VIEW_ONE': 6,
+                    'SELECT_CONTACTS': 7,
+                    'SELECT_DEPTE': 8,
+                    'UPLOAD_ITEM': 9,
+                    'NULL_VIEW': 10
+                };
+                return typeMap[type] || 1;
+            }
+        }
+
+        // 全局变量存储 RecordsBean 列表
+        let recordsList = [];
+
+        // 标签页切换
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                if (this.getAttribute('onclick')) return; // 跳过带onclick的标签
+                
+                // 移除所有active类
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                // 添加active类到当前标签
+                this.classList.add('active');
+                const tabId = this.getAttribute('data-tab') + '-tab';
+                document.getElementById(tabId).classList.add('active');
+
+                // 如果是Records标签，初始化拖拽
+                if (this.getAttribute('data-tab') === 'records') {
+                    initRecordsTab();
+                }
+            });
+        });
+        
+        // 初始化Records标签页
+        function initRecordsTab() {
+            // 从 localStorage 加载数据
+            loadFromStorage();
+            
+            // 绑定组件拖拽事件
+            initDragAndDrop();
+            
+            // 更新视图
+            updateView();
+        }
+
+        // 初始化拖拽功能
+        function initDragAndDrop() {
+            const components = document.querySelectorAll('#records-tab .component-item');
+            const dropZone = document.getElementById('recordsList');
+
+            components.forEach(component => {
+                component.draggable = true;
+                component.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('type', component.dataset.type);
+                });
+            });
+
+            dropZone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                e.dataTransfer.dropEffect = 'copy';
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                const type = e.dataTransfer.getData('type');
+                addNewRecord(type);
+            });
+        }
+
+        // 添加新记录
+        function addNewRecord(type) {
+            const record = new RecordsBean(type);
+            record.ordernum = recordsList.length + 1;
+            recordsList.push(record);
+            updateView();
+            saveToStorage();
+        }
+
+        // 更新视图
+        function updateView() {
+            updateRecordsList();
+            updateJsonView();
+        }
+
+        // 更新记录列表视图
+        function updateRecordsList() {
+            const container = document.getElementById('recordsList');
+            if (!container) return;
+            
+            container.innerHTML = '';
+            recordsList.forEach((record, index) => {
+                const item = document.createElement('div');
+                item.className = 'records-item';
+                item.innerHTML = `
+                    <div class="field-row">
+                        <span class="field-label">类型：</span>
+                        <span class="field-value">${record.type}</span>
+                    </div>
+                    <div class="field-row">
+                        <span class="field-label">标题：</span>
+                        <input type="text" class="property-input" value="${record.titile}" 
+                            onchange="updateRecord(${index}, 'titile', this.value)">
+                    </div>
+                    <div class="field-row">
+                        <span class="field-label">字段名：</span>
+                        <input type="text" class="property-input" value="${record.field}"
+                            onchange="updateRecord(${index}, 'field', this.value)">
+                    </div>
+                    <div class="field-row">
+                        <span class="field-label">默认值：</span>
+                        <input type="text" class="property-input" value="${record.defaultValue}"
+                            onchange="updateRecord(${index}, 'defaultValue', this.value)">
+                    </div>
+                    <div class="field-row">
+                        <span class="field-label">必填：</span>
+                        <input type="checkbox" ${record.require ? 'checked' : ''}
+                            onchange="updateRecord(${index}, 'require', this.checked)">
+                    </div>
+                    <div class="field-row">
+                        <button class="btn btn-default" onclick="deleteRecord(${index})">删除</button>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        // 更新JSON视图
+        function updateJsonView() {
+            const jsonView = document.getElementById('jsonView');
+            if (!jsonView) return;
+            
+            const cleanRecords = recordsList.map(record => {
+                // 只保留有值的字段
+                const cleanRecord = {};
+                Object.entries(record).forEach(([key, value]) => {
+                    if (value !== '' && value !== null && value !== undefined) {
+                        cleanRecord[key] = value;
+                    }
+                });
+                return cleanRecord;
+            });
+            jsonView.textContent = JSON.stringify(cleanRecords, null, 2);
+        }
+
+        
+
+        
+
+        
+
+        // 清空记录
+        function clearRecords() {
+            if (confirm('确定要清空所有记录吗？')) {
+                recordsList = [];
+                updateView();
+                saveToStorage();
+            }
+        }
+
+        // 保存到localStorage
+        function saveToStorage() {
+            localStorage.setItem('recordsBeanList', JSON.stringify(recordsList));
+        }
+
+        // 从localStorage加载
+        function loadFromStorage() {
+            const saved = localStorage.getItem('recordsBeanList');
+            if (saved) {
+                try {
+                    recordsList = JSON.parse(saved);
+                } catch (error) {
+                    recordsList = [];
+                }
+            }
+        }
+    </script>
+</body>
+</html>

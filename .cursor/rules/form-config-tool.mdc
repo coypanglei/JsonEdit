@@ -1,0 +1,177 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# 表单配置工具
+
+这是一个用于设计和生成表单的可视化配置工具。该工具允许用户通过界面设计表单，并支持JSON配置导入导出以及代码生成功能。
+
+## 主要文件
+
+- [index.html](mdc:index.html) - 主界面，包含表单设计器
+- [records-config.html](mdc:records-config.html) - RecordsBean配置页面
+- [json-config.html](mdc:json-config.html) - JSON配置页面
+- [code-generator.html](mdc:code-generator.html) - 代码生成页面
+- [styles.css](mdc:styles.css) - 全局样式文件
+- [RecordsBean.java](mdc:RecordsBean.java) - Java实体类定义
+
+## 工作流程
+
+1. 表单设计（index.html）
+   - 从左侧组件列表拖拽组件到设计区
+   - 设置组件属性（标题、字段名、默认值等）
+   - 实时预览表单效果
+   - 数据自动保存到localStorage
+
+2. RecordsBean配置（records-config.html）
+   - 自动从表单设计生成RecordsBean配置
+   - 支持编辑RecordsBean属性
+   - 支持直接编辑JSON
+   - 支持导入已有的RecordsBean JSON
+   - 修改会同步更新到表单设计
+
+3. JSON配置（json-config.html）
+   - 导入导出JSON配置
+   - JSON格式校验
+   - 配置预览
+
+4. 代码生成（code-generator.html）
+   - 根据配置生成代码
+   - 预览生成结果
+   - 复制生成的代码
+
+## 数据流
+
+1. 表单设计 -> RecordsBean
+```
+FormItem {
+  id: string
+  type: string
+  title: string
+  field: string
+  defaultValue: string
+  required: boolean
+} 
+->
+RecordsBean {
+  paramType: number
+  titile: string
+  field: string
+  defaultValue: string
+  type: string
+  require: boolean
+  edit: boolean
+  ordernum: number
+}
+```
+
+2. 数据持久化
+```
+表单设计数据 -> localStorage('formItems')
+RecordsBean数据 -> localStorage('recordsBeanList')
+```
+
+## 组件类型映射
+
+基础组件：
+- EDIT_ITEM(1): 单行文本框
+- EDIT_TEXT_LARGE(2): 多行文本框
+- TIME_ITEM(3): 时间选择器
+- POPU_ITEM(4): 下拉选择框
+- TEXT_VIEW_SINGLE_SELECT(5): 单选框
+- TEXT_VIEW_ONE(6): 按钮
+
+高级组件：
+- SELECT_CONTACTS(7): 选择联系人
+- SELECT_DEPTE(8): 选择部门
+- UPLOAD_ITEM(9): 上传附件
+- NULL_VIEW(10): 空白分隔
+
+## 项目结构
+
+主要文件：
+- [index.html](mdc:index.html) - 主界面，包含表单设计器
+- [json-config.html](mdc:json-config.html) - JSON配置页面
+- [code-generator.html](mdc:code-generator.html) - 代码生成页面
+- [styles.css](mdc:styles.css) - 全局样式文件
+
+JavaScript模块：
+- [js/utils.js](mdc:js/utils.js) - 通用工具类
+- [js/form-manager.js](mdc:js/form-manager.js) - 表单数据管理类
+- [js/ui-manager.js](mdc:js/ui-manager.js) - UI界面管理类
+
+## 功能模块
+
+### 核心类
+
+1. Utils 类
+   - 消息提示
+   - 剪贴板操作
+   - localStorage 数据管理
+
+2. FormManager 类
+   - 表单项管理（增删改查）
+   - 表单项排序
+   - 数据持久化
+
+3. UIManager 类
+   - 表单设计区域更新
+   - 属性面板管理
+   - 预览区域渲染
+   - 拖拽交互处理
+
+### 组件映射
+
+基础组件：
+- EDIT_ITEM: 单行文本框
+- EDIT_TEXT_LARGE: 多行文本框
+- TIME_ITEM: 时间选择器
+- POPU_ITEM: 下拉选择框
+- TEXT_VIEW_SINGLE_SELECT: 单选框
+- TEXT_VIEW_ONE: 按钮
+
+高级组件：
+- SELECT_CONTACTS: 选择联系人
+- SELECT_DEPTE: 选择部门
+- UPLOAD_ITEM: 上传附件
+- NULL_VIEW: 空白分隔
+
+## 使用说明
+
+1. 表单设计
+   - 从左侧组件列表拖拽组件到设计区
+   - 点击组件编辑属性
+   - 使用上下箭头调整顺序
+   - 实时预览表单效果
+
+2. JSON配置
+   - 支持导入导出JSON配置
+   - 自动验证JSON格式
+   - 保存配置到localStorage
+
+3. 代码生成
+   - 根据表单配置生成代码
+   - 支持复制生成的代码
+   - 预览生成结果
+
+## 数据流
+
+1. 组件添加流程
+   ```
+   点击组件 -> FormManager.addFormItem() -> UIManager.updateFormArea() -> 更新预览
+   ```
+
+2. 属性更新流程
+   ```
+   修改属性 -> FormManager.updateFormItem() -> UIManager.updatePropertyPanel() -> 更新预览
+   ```
+
+3. 数据持久化
+   ```
+   操作完成 -> FormManager.saveToStorage() -> Utils.saveToStorage() -> localStorage
+   ```
+
+
+
+
