@@ -172,10 +172,36 @@
         
         // 初始化页面
         document.addEventListener('DOMContentLoaded', function() {
-            // 从localStorage加载数据
-            formManager.loadFromStorage();
-            uiManager.updateFormArea();
-            uiManager.updatePreview();
+        
+              // 优先从 apiResultData 取
+              const apiResult = localStorage.getItem('apiResultData');
+            if (apiResult) {
+                let data;
+                try {
+                    const parsed = JSON.parse(apiResult);
+                    if (Array.isArray(parsed)) {
+                        data = parsed[0] || {};
+                    } else if (typeof parsed === 'object' && parsed !== null) {
+                        data = parsed;
+                    } else {
+                        data = {};
+                    }
+                } catch (e) {
+                    data = {};
+                }
+                // 转换为表单项数组
+                const items = convertApiDataToFormItems(data);
+                localStorage.setItem('formItems', JSON.stringify(items));
+                localStorage.removeItem('apiResultData');
+                formManager.loadFromStorage();
+                uiManager.updateFormArea();
+                uiManager.updatePreview();
+            } else {
+               // 从localStorage加载数据
+                formManager.loadFromStorage();
+                uiManager.updateFormArea();
+                uiManager.updatePreview();
+            }
 
             // 监听表单标题变化
             document.getElementById('formTitle').addEventListener('input', function() {
@@ -449,6 +475,24 @@
                     recordsList = [];
                 }
             }
+        }
+
+        function convertApiDataToFormItems(data) {
+            // data 是单个对象
+            const items = [];
+            for (const key in data) {
+                if (data.hasOwnProperty(key)) {
+                    items.push({
+                        id: 'auto_' + key,
+                        type: 'EDIT_ITEM', // 默认类型，可根据实际需求调整
+                        title: key,
+                        field: key,
+                        defaultValue: data[key],
+                        required: false
+                    });
+                }
+            }
+            return items;
         }
     </script>
 </body>

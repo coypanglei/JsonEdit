@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JSON Parser</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/jsencrypt@3.3.2/bin/jsencrypt.min.js"></script>
+</head>
+<body>
+  
+  <h1>JSON Parser</h1>
+  <div id="login-area" style="margin-bottom:20px;">
+    <input type="text" id="login-username" placeholder="账号" />
+    <input type="text" id="login-password" placeholder="密码" />
+    <button onclick="login()">登录</button>
+  </div>
+  <div class="container">
+    <div class="section">
+      <button class="toggle-button" onclick="toggleJsonInput()">显示/隐藏 JSON</button>
+      <div id="output" class="output"></div>
+    </div>
+    <div class="modal-overlay"></div>
+    <div class="section json-input-section" >
+      <button class="close-button" onclick="toggleJsonInput()">&times;</button>
+      <textarea id="jsonInput" placeholder="输入JSON"></textarea>
+      <div>
+        <button class="parse-button" onclick="parseJson()">解析JSON</button>
+        <button class="format-button" onclick="formatJson()">格式化</button>
+        <button class="validate-button" onclick="validateJson()">验证</button>
+        <button class="copy-button" onclick="copyJson()">复制JSON</button>
+      </div>
+      <div id="validationMessage" class="validation-message"></div>
+    </div>
+  
+    <button id="settingsBtn" style="position:absolute;top:20px;right:40px;z-index:1100;">设置</button>
+<div id="settingsModal" class="json-input-section" style="z-index:2000;display:none;">
+  <button class="close-button" onclick="toggleSettings()">&times;</button>
+  <h2>设置</h2>
+  <div class="form-group">
+    <label>Base URL:</label>
+    <input type="text" id="baseurlInput" />
+  </div>
+  <div class="form-group">
+    <label>API URL:</label>
+    <input type="text" id="apiurlInput" />
+  </div>
+  <button onclick="saveSettings()">保存</button>
+</div>
+  </div>
+  <div id="custom-params-area" style="margin-bottom:10px;">
+    <label>自定义参数：</label>
+    <div id="custom-params-list"></div>
+    <button type="button" onclick="addCustomParam()">添加参数</button>
+  </div>
+  <div id="api-result-area" class="output"></div>
+  
+  <script src="main.js"></script>
+</body>
+</html>
